@@ -113,6 +113,24 @@ func main() {
     fs := http.FileServer(http.Dir("public"))
     http.Handle("/", fs)
 
+    http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+	    fmt.Println("test_in")
+		fmt.Fprintln(w, `
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Test</title>
+		</head>
+		<body>
+		     test socket
+		</body>
+		</html>
+		`)	
+	})
+
     // Configure websocket route
     http.HandleFunc("/ws", handleConnections)
 
@@ -120,9 +138,12 @@ func main() {
     go handleMessages()
 
     // Start the server on localhost port 8000 and log any errors
-    fmt.Println("Server running on :8000")
-    err := http.ListenAndServe(":8000", nil)
+    fmt.Println("Server running on :3000")
+    err := http.ListenAndServe(":3000", nil)
     if err != nil {
         log.Fatal("ListenAndServe: ", err)
     }
+    //log.Fatal(app.listening)
 }
+
+
