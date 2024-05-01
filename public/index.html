@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+</head>
+<body>
+    <h1>WebSocket Client</h1>
+    <input type="text" id="messageInput" placeholder="Enter message">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="mv1()">Start move</button>
+    <ul id="messageList"></ul>
+
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+        }
+
+        .circle {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background-color: rgb(32, 22, 174);
+          position: absolute;
+        }
+    </style>
+    <!-- <div id="circle" class="circle"></div>
+    -->
+    <div id="container"></div> 
+
+    <script> //    ws://192.168.1.157:8080/ws 
+       //
+        const socket = new WebSocket( "ws://localhost:8000/ws");
+        const myMap = new Map();
+
+        class CCCircle {
+                constructor(x, y, c , user) {
+                this.x = x;
+                this.y = y;
+                this.c = c;
+                this.user = user;
+           }  
+       }
+       
+
+        socket.onopen = function(event) {
+            console.log("WebSocket connection established.");
+        };
+
+        socket.onmessage = function(event) {
+            const messageList = document.getElementById("messageList");
+            const listItem = document.createElement("li");
+            listItem.textContent = event.data;
+            var parsedData = JSON.parse(event.data);
+            var text =  parsedData.text;  
+            var username = parsedData.username;  
+            if (text!="") {
+                messageList.appendChild(listItem);     
+            }
+
+            if (myMap.has(username)) {
+                 myMap.get(username).x =  parsedData.x;
+                 myMap.get(username).y =  parsedData.x;
+                 const circleDiv = document.getElementById(username);
+                 circleDiv.style.left = parsedData.x + 'px';
+                 circleDiv.style.top = parsedData.y + 'px';
+            } else {
+
+                addCircle(parsedData.x,parsedData.y,0, username)
+            }            
+        };
+
+        function addCircle(x,y,c,u) {
+        
+            console.log(u);
+            const circle = new CCCircle(x, y, 0, u); // Set radius to 15 for example
+           
+            myMap.set( u, circle); // Add circle to the map
+
+            // Create a new div for the circle
+            const circleDiv = document.createElement('div');
+            circleDiv.className = 'circle';
+            var randomColor = Math.floor(Math.random()*16777215).toString(16);
+            circle.c = randomColor;
+                // circle.style.backgroundColor = randomColor;
+            circleDiv.style.backgroundColor= "#" +randomColor;
+            circleDiv.style.left = x + 'px';
+            circleDiv.style.top = y + 'px';
+            circleDiv.setAttribute("id", u);
+            circleDiv.innerHTML +=  u;
+            document.getElementById('container').appendChild(circleDiv);
+    }
+          
+
+     //   myMap.set('key1', 'value1');
+        socket.onclose = function(event) {
+            console.log("WebSocket connection closed.");
+        };
+
+        socket.onerror = function(event) {
+            console.error("WebSocket error:", event);
+        };
+
+        function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const message = messageInput.value;
+            socket.send(JSON.stringify({ text: message, x : xPos, y: yPos }));
+            messageInput.value = "";
+        }
+
+        function sendMessageXY() {
+            const messageInput = document.getElementById("messageInput");
+            const message = messageInput.value;
+            socket.send(JSON.stringify({ text: "", x : xPos, y: yPos }));
+         //   messageInput.value = "";
+        }
+
+      //  var circle = document.getElementById('circle');
+
+
+        // Initial position
+        var mv = 1;
+
+        function mv1() {
+            mv = 1;
+        }
+        var xPos = 200;
+        var yPos = 200;
+
+        // Function to move the circle
+        // function moveCircle(x, y) {
+        //     circle.style.left = x + 'px';
+        //     circle.style.top = y + 'px';
+        // }
+        
+        function move() {
+        //    console.log("move")
+          if (mv == 1) {
+            xPos += 1;
+            if (xPos>800) {
+                xPos = 100
+            }
+          ///  moveCircle(xPos, yPos);
+            sendMessageXY()
+          }
+        }
+
+        setInterval(move, 100)
+
+      //  moveCircle(xPos,yPos)
+        // Event listener for keyboard input
+        document.addEventListener('keydown', function(event) {
+            // Detect arrow key presses
+            switch(event.key) {
+                case 'ArrowUp':
+                    yPos -= 10; // Move up
+                    break;
+                case 'ArrowDown':
+                    yPos += 10; // Move down
+                    break;
+                case 'ArrowLeft':
+                    xPos -= 10; // Move left
+                    break;
+                case 'ArrowRight':
+                    xPos += 10; // Move right
+                    break;
+            }
+
+            // Move the circle
+            moveCircle(xPos, yPos);
+        });
+
+        /*
+  кждый ход записываем в транзакцию
+  пруф ов смарт
+  вопрос как обеспечить взаимодействие ?
+*/
+
+    </script>
+</body>
+</html>
+
